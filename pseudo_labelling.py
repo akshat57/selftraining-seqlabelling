@@ -13,8 +13,8 @@ import os
 from useful_functions import load_data, save_data
 import argparse
 
-def testing(model, testing_loader, labels_to_ids, device, logfile_location):
-    self_training_threshold = 0.97
+def testing(model, testing_loader, labels_to_ids, device, logfile_location, iter):
+    selection_number = 80
 
     # put model in evaluation mode
     model.eval()
@@ -31,8 +31,6 @@ def testing(model, testing_loader, labels_to_ids, device, logfile_location):
     all_sentences = []
     all_labels = []
     all_flags = []#doing nothing with flags here
-
-    threshold = 0.97
 
     logfile = open(logfile_location, 'w')
 
@@ -71,26 +69,22 @@ def testing(model, testing_loader, labels_to_ids, device, logfile_location):
             
     print(torch.mean(all_averages).item(), torch.std(all_averages).item(), torch.max(all_averages).item())
     logfile.write(str(torch.mean(all_averages).item()) + ',' + str(torch.std(all_averages).item()) + ',' + str(torch.max(all_averages).item()) + '\n')
-
-
-    selected_indices = all_averages >= self_training_threshold
-    selected_indices = selected_indices.detach().cpu().tolist()
-
-    unselected_indices  = all_averages < self_training_threshold
-    unselected_indices = unselected_indices.detach().cpu().tolist()
+    
+    selected_indices = torch.topk(all_averages, selection_number)[1].detach().cpu().tolist()
+    unselected_indices = torch.topk(-all_averages, max(all_averages.shape[0] - selection_number, 0))[1].detach().cpu().tolist()
 
     #choose selected data
-    selected_sentences = [all_sentences[i] for i, select in enumerate(selected_indices) if select]
-    selected_labels = [all_sentences[i] for i, select in enumerate(selected_indices) if select]
-    selected_flags = [all_sentences[i] for i, select in enumerate(selected_indices) if select]
+    selected_sentences = [all_sentences[index] for index in selected_indices]
+    selected_labels = [all_labels[index] for index in selected_indices]
+    selected_flags = [all_flags[index] for index in selected_indices]
 
-    #choose selected data
-    unselected_sentences = [all_sentences[i] for i, select in enumerate(selected_indices) if not select]
-    unselected_labels = [all_sentences[i] for i, select in enumerate(selected_indices) if not select]
-    unselected_flags = [all_sentences[i] for i, select in enumerate(selected_indices) if not select]
+    #choose unselected data
+    unselected_sentences = [all_sentences[index] for index in unselected_indices]
+    unselected_labels = [all_labels[index] for index in unselected_indices]
+    unselected_flags = [all_flags[index] for index in unselected_indices]
 
-    print('SELECTED SENTENCES:'  +  str(len(selected_sentences)) + '\n')
-    logfile.write('SELECTED SENTENCES:'  +  str(len(selected_sentences)) + '\n')
+    print('SELECTED SENTENCES:'  +  str(len(selected_sentences)) + '| UNSELECTED SENTENCES' +  str(len(unselected_sentences)) + 'TOTAL:' + str(len(selected_sentences) + len(unselected_sentences)) + '?' + str(len(all_sentences)) + '\n')
+    logfile.write('SELECTED SENTENCES:'  +  str(len(selected_sentences)) + '| UNSELECTED SENTENCES' +  str(len(unselected_sentences)) + 'TOTAL:' + str(len(selected_sentences) + len(unselected_sentences)) + '?' + str(len(all_sentences)) + '\n')
     logfile.close()
     return selected_sentences, selected_labels, selected_flags, unselected_sentences, unselected_labels, unselected_flags 
 
@@ -144,8 +138,7 @@ if __name__ == '__main__':
     #Get dataloaders
     train_loader, dev_loader, test_loader = initialize_data(tokenizer, initialization_input, input_data)
         
-    selected_sentences, selected_labels, selected_flags, unselected_sentences, unselected_labels, unselected_flags = testing(model, test_loader, test_labels, device, logfile_location)
-
+    selected_sentences, selected_labels, selected_flags, unselected_sentences, unselected_labels, unselected_flags = testing(model, test_loader, test_labels, device, logfile_location, int(args.iter))
 
     ##Create data for next iteration
     new_iteration = 'iteration' + str(int(args.iter) + 1) + '/'
@@ -175,11 +168,3 @@ if __name__ == '__main__':
     save_data(save_data_location + 'target_train.pkl', new_target_data)
     save_data(save_data_location + 'target_dev.pkl', target_dev)
     save_data(save_data_location + 'target_test.pkl', target_test)
-    
-    
-
-
-
-
-
-    
