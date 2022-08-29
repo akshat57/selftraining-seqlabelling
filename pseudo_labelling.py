@@ -138,7 +138,7 @@ if __name__ == '__main__':
     #Get dataloaders
     train_loader, dev_loader, test_loader = initialize_data(tokenizer, initialization_input, input_data)
         
-    selected_sentences, selected_labels, selected_flags, unselected_sentences, unselected_labels, unselected_flags = testing(model, test_loader, test_labels, device, logfile_location, int(args.iter))
+    selected_sentences, selected_labels, selected_flags, unselected_sentences, unselected_labels, unselected_flags = testing(model, train_loader, test_labels, device, logfile_location, int(args.iter))
 
     ##Create data for next iteration
     new_iteration = 'iteration' + str(int(args.iter) + 1) + '/'
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     for (sentence, labels, flags) in zip(unselected_sentences, unselected_labels, unselected_flags):
         new_target_data.append((sentence, labels, flags))
 
-    
+
     #Save data for next iteration 
     save_data(save_data_location+ 'source_train.pkl', new_source_train)
     save_data(save_data_location + 'source_dev.pkl', source_dev)
@@ -168,3 +168,11 @@ if __name__ == '__main__':
     save_data(save_data_location + 'target_train.pkl', new_target_data)
     save_data(save_data_location + 'target_dev.pkl', target_dev)
     save_data(save_data_location + 'target_test.pkl', target_test)
+    
+    
+
+
+
+
+
+    
