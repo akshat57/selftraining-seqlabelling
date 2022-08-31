@@ -73,6 +73,12 @@ def testing(model, testing_loader, labels_to_ids, device, logfile_location, iter
     selected_indices = torch.topk(all_averages, selection_number)[1].detach().cpu().tolist()
     unselected_indices = torch.topk(-all_averages, max(all_averages.shape[0] - selection_number, 0))[1].detach().cpu().tolist()
 
+    ##log selected indices
+    logfile.write('\nSELECTED SCORES:\n\n')
+    for index in selected_indices:
+        logfile.write(str(all_averages[index].item()) + '\n' )
+    logfile.write('\n')
+
     #choose selected data
     selected_sentences = [all_sentences[index] for index in selected_indices]
     selected_labels = [all_labels[index] for index in selected_indices]
@@ -158,7 +164,6 @@ if __name__ == '__main__':
     new_target_data = []
     for (sentence, labels, flags) in zip(unselected_sentences, unselected_labels, unselected_flags):
         new_target_data.append((sentence, labels, flags))
-
 
     #Save data for next iteration 
     save_data(save_data_location+ 'source_train.pkl', new_source_train)

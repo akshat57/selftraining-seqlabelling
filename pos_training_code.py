@@ -63,6 +63,7 @@ def train(epoch, training_loader, model, optimizer, device, grad_step = 1, max_g
             optimizer.step()
             optimizer.zero_grad()
 
+
     epoch_loss = tr_loss / nb_tr_steps
     tr_accuracy = tr_accuracy / nb_tr_steps
     #print(f"Training loss epoch: {epoch_loss}")
@@ -164,11 +165,13 @@ if __name__ == '__main__':
     os.makedirs(model_save_location, exist_ok = True)
     logfile_location = 'iteration' + args.iter + '/logs/logs_training.txt'
     f = open(logfile_location, 'w')
-    f.close()
 
     #Load data
     dataset_location = 'iteration' + args.iter + '/data/'
     source_train, source_dev, source_test, train_labels, dev_labels, test_labels = load_train_data(dataset_location, 'source')
+    f.write('TRAIN DATASET:' + str(len(source_train)) + '\n\n')
+    f.close()
+
     print(len(source_train))
     source_input_data = (source_train, source_dev, source_test, train_labels, dev_labels, test_labels)
     target_train, target_dev, target_test, train_labels, dev_labels, test_labels = load_train_data(dataset_location, 'target')
